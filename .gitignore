@@ -1,0 +1,5 @@
+user
+.DS_Store
+.ipynb_checkpoints
+chromedriver*
+configuration.json

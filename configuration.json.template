@@ -1,0 +1,13 @@
+{
+    "authentication": {
+        "consumer_key": "SPLITWISE_CONSUMER_KEY", 
+        "consumer_secret": "SPLITWISE_CONSUMER_SECRET", 
+        "api_key": "SPLITWISE_API_KEY"
+    },
+    "att_group_id": "SPLITWISE_ATT_GROUP_ID",
+    "sw_account_mapping": {
+        "JOHN DOE": 123,
+        "JANE DOE": 456
+    },
+    "default_payer_id": 123
+}
