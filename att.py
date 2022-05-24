@@ -27,11 +27,12 @@ try:
 except:
     input("Check browser for successful login and then press Enter.")
 
+
 dues = []
 driver.get('https://www.att.com/acctmgmt/billandpay')
 
 # get all bill lines
-lines = driver.find_elements_by_class_name('BillDetails__autopay-accordian-main__2sJh6')
+lines = driver.find_elements_by_class_name('OnlineBillDetails__autopay-accordian-main__rmAyb')
 
 for line in lines:
     line.click()
