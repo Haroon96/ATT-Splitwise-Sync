@@ -3,3 +3,5 @@ user
 .ipynb_checkpoints
 chromedriver*
 configuration.json
+geckodriver
+geckodriver.log
