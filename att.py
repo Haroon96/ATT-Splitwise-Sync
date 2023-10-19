@@ -10,47 +10,45 @@ from splitwise.user import ExpenseUser
 import json
 
 def create_expense(sw, att_group_id, paid_by, paid_for, amount, details):
-        expense = Expense()
-        expense.setGroupId(att_group_id)
-        expense.setCost(amount)
-        expense.setDescription("AT&T")
-        expense.setDetails(details)
-        
-        paid_by_user = ExpenseUser()
-        paid_by_user.setId(paid_by)
-        
-        paid_for_user = ExpenseUser()
-        paid_for_user.setId(paid_for)
-        
-        paid_by_user.setPaidShare(amount)
-        paid_by_user.setOwedShare('0.00')
-        
-        paid_for_user.setPaidShare('0.00')
-        paid_for_user.setOwedShare(amount)
-        
-        expense.addUser(paid_by_user)
-        expense.addUser(paid_for_user)
-        
-        nExpense, error = sw.createExpense(expense)
-        if error is not None:
-            print(error.getErrors())
+    expense = Expense()
+    expense.setGroupId(att_group_id)
+    expense.setCost(amount)
+    expense.setDescription("AT&T")
+    expense.setDetails(details)
+    
+    paid_by_user = ExpenseUser()
+    paid_by_user.setId(paid_by)
+    
+    paid_for_user = ExpenseUser()
+    paid_for_user.setId(paid_for)
+    
+    paid_by_user.setPaidShare(amount)
+    paid_by_user.setOwedShare('0.00')
+    
+    paid_for_user.setPaidShare('0.00')
+    paid_for_user.setOwedShare(amount)
+    
+    expense.addUser(paid_by_user)
+    expense.addUser(paid_for_user)
+    
+    nExpense, error = sw.createExpense(expense)
+    if error is not None:
+        print(error.getErrors())
 
 def init_driver():
     # add chrome options
-    options = ChromeOptions()
-    options.add_argument('--user-data-dir=user')
-    options.add_argument('--window-size=640,480')
-    driver = uc.Chrome(options=options)
+    options = uc.ChromeOptions()
+    options.headless = False
+    options.binary_location = './chrome.app/Contents/MacOS/Google Chrome for Testing'
+    driver = uc.Chrome(options=options, version_main=116, user_data_dir='user', use_subprocess=True, executable_path='./chromedriver')
     driver.implicitly_wait(60)
     return driver
-
 
 def main():
     # load configuration
     with open('configuration.json') as f:
         config = json.load(f)
         auth = config['authentication']
-
 
     driver = init_driver()
 
@@ -59,7 +57,7 @@ def main():
 
     # wait for account overview page
     try:
-        WebDriverWait(driver, timeout=30).until(EC.url_contains('accountoverview'))
+        WebDriverWait(driver, timeout=30).until(EC.title_contains('Overview'))
     except:
         input("Check browser for successful login and then press Enter.")
 
