@@ -10,27 +10,34 @@ from splitwise.user import ExpenseUser
 import json
 
 def create_expense(sw, att_group_id, paid_by, paid_for, amount, details):
+    # create expense object
     expense = Expense()
     expense.setGroupId(att_group_id)
     expense.setCost(amount)
     expense.setDescription("AT&T")
     expense.setDetails(details)
     
+    # add information about who paid
     paid_by_user = ExpenseUser()
     paid_by_user.setId(paid_by)
     
+    # add information about who pays
     paid_for_user = ExpenseUser()
     paid_for_user.setId(paid_for)
     
+    # set payment amounts for who paid
     paid_by_user.setPaidShare(amount)
     paid_by_user.setOwedShare('0.00')
     
+    # set payment amount for who pays
     paid_for_user.setPaidShare('0.00')
     paid_for_user.setOwedShare(amount)
     
+    # add users to expense entry
     expense.addUser(paid_by_user)
     expense.addUser(paid_for_user)
     
+    # create expense
     nExpense, error = sw.createExpense(expense)
     if error is not None:
         print(error.getErrors())
@@ -50,6 +57,7 @@ def main():
         config = json.load(f)
         auth = config['authentication']
 
+    # init driver
     driver = init_driver()
 
     # go to login page for att
@@ -62,6 +70,7 @@ def main():
         input("Check browser for successful login and then press Enter.")
 
 
+    # get billing page
     driver.get('https://www.att.com/acctmgmt/billandpay')
 
     # get all bill lines
@@ -71,10 +80,11 @@ def main():
     for line in lines:
         line.click()
         
+    # wait 5 seconds for lines to expand
     sleep(5)
 
+    # get due amounts from AT&T
     dues = []
-
     for line in lines:
         
         # extract details
@@ -96,6 +106,7 @@ def main():
     account_mappings = config['sw_account_mapping']
     default_payer_id = config['default_payer_id']
 
+    # create expenses on splitwise
     for due in dues:
         title = due['title']
         amount = due['amount']
@@ -115,7 +126,7 @@ def main():
         print('%s owes %s' % (title, amount))
         create_expense(sw, att_group_id, default_payer_id, paid_for_id, amount, details)
 
-
+    # close driver
     driver.close()
 
 
