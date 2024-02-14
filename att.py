@@ -74,28 +74,28 @@ def main():
     driver.get('https://www.att.com/acctmgmt/billandpay')
 
     # get all bill lines
-    lines = driver.find_elements(By.CLASS_NAME, 'OnlineBillDetails__autopay-accordian-main__rmAyb')
+    lines = driver.find_elements(By.CSS_SELECTOR, '[data-test-id="history-bill-details"]')
 
+    # wait 5 seconds for lines to expand
+    sleep(5)
+    
     # expand all lines
     for line in lines:
         line.click()
         
-    # wait 5 seconds for lines to expand
-    sleep(5)
-
     # get due amounts from AT&T
     dues = []
     for line in lines:
         
         # extract details
         details = line.text.split('\n')
-        title, amount = details[:2]
+        title, number, amount = details[:3]
         
         # add to dues
         dues.append(dict(
             title=title,
             amount=amount.replace('$', ''),
-            details='\n'.join(details[2:])
+            details='\n'.join(details)
         ))
 
     # access splitwise API
