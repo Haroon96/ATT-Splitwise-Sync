@@ -63,6 +63,12 @@ def main():
     # go to login page for att
     driver.get('https://www.att.com/acctmgmt/login')
 
+    # click on first user ID
+    try:
+        driver.find_element(By.ID, 'savedUserUserButton0').click()
+    except:
+        pass
+
     # wait for account overview page
     try:
         WebDriverWait(driver, timeout=30).until(EC.title_contains('Overview'))
@@ -74,14 +80,15 @@ def main():
     driver.get('https://www.att.com/acctmgmt/billandpay')
 
     # get all bill lines
-    lines = driver.find_elements(By.CSS_SELECTOR, '[data-test-id="history-bill-details"]')
+    lines = driver.find_elements(By.CSS_SELECTOR, 'div:has(> [data-testid="service-accordion-button"])')
 
-    # wait 5 seconds for lines to expand
+    # wait 5 seconds for lines to be expandable
     sleep(5)
     
     # expand all lines
     for line in lines:
         line.click()
+        
         
     # get due amounts from AT&T
     dues = []
