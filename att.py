@@ -153,7 +153,11 @@ def main():
         save_config(config)
 
     # get account mappings
-    account_mappings = config.get('sw_account_mapping', {})
+    splitwise_mappings = config.get('splitwise_mappings', None)
+    if not splitwise_mappings:
+        config['splitwise_mappings'] = {}
+        splitwise_mappings = config['splitwise_mappings']
+        save_config(config)
 
     # create expenses on splitwise
     for due in dues:
@@ -162,22 +166,22 @@ def main():
         details = due['details']
 
         # check if splitwise Id exists
-        if title not in account_mappings:
+        if title not in splitwise_mappings:
             print("No account mapping for", title)
             print("Pick one from below.")
             members = sw.getGroup(att_group_id).getMembers()
             for ind, member in enumerate(members):
                 print('%s: %s' % (ind, member.getFirstName()))
             pick = int(input('Choice: ').strip())
-            account_mappings[title] = members[pick].getId()
+            splitwise_mappings[title] = members[pick].getId()
             save_config(config)
         
         # skip default payer
-        if account_mappings[title] == default_payer_id:
+        if splitwise_mappings[title] == default_payer_id:
             continue
 
         # create expense
-        paid_for_id = account_mappings[title]
+        paid_for_id = splitwise_mappings[title]
         print('%s owes %s' % (title, amount))
         create_expense(sw, att_group_id, default_payer_id, paid_for_id, amount, details)
 
