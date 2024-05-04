@@ -1,4 +1,3 @@
-from selenium.webdriver import ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -8,6 +7,10 @@ from splitwise import Splitwise
 from splitwise.expense import Expense
 from splitwise.user import ExpenseUser
 import json
+
+def save_config(config):
+    with open('config.json', 'w') as f:
+        json.dump(config, f, indent=4)
 
 def create_expense(sw, att_group_id, paid_by, paid_for, amount, details):
     # create expense object
@@ -45,17 +48,17 @@ def create_expense(sw, att_group_id, paid_by, paid_for, amount, details):
 def init_driver():
     # add chrome options
     options = uc.ChromeOptions()
-    options.headless = False
-    options.binary_location = './chrome.app/Contents/MacOS/Google Chrome for Testing'
-    driver = uc.Chrome(options=options, version_main=116, user_data_dir='user', use_subprocess=True, executable_path='./chromedriver')
+    driver = uc.Chrome(options=options, user_data_dir='user', use_subprocess=True)
     driver.implicitly_wait(60)
     return driver
 
 def main():
     # load configuration
-    with open('configuration.json') as f:
-        config = json.load(f)
-        auth = config['authentication']
+    try:
+        with open('config.json') as f:
+            config = json.load(f)
+    except:
+        config = {}
 
     # init driver
     driver = init_driver()
@@ -89,7 +92,6 @@ def main():
     for line in lines:
         line.click()
         
-        
     # get due amounts from AT&T
     dues = []
     for line in lines:
@@ -106,12 +108,52 @@ def main():
         ))
 
     # access splitwise API
-    sw = Splitwise(auth['consumer_key'], auth['consumer_secret'], api_key=auth['api_key'])
+    splitwise_authentication = config.get('splitwise_authentication', None)
+    if not splitwise_authentication:
+        print("Splitwise authentication not found. Please follow the URL below to create a new app and enter the details below.")
+        print("https://secure.splitwise.com/apps/")
+        config['splitwise_authentication'] = dict(
+            consumer_key=input("Consumer key >").strip(),
+            consumer_secret=input("Consumer secret >").strip(),
+            api_key=input("API key >").strip()
+        )
+        splitwise_authentication = config['splitwise_authentication']
+        save_config(config)
+        
+    sw = Splitwise(
+        consumer_key=splitwise_authentication['consumer_key'], 
+        consumer_secret=splitwise_authentication['consumer_secret'], 
+        api_key=splitwise_authentication['api_key']
+    )
 
-    # create splitwise expenses
-    att_group_id = config['att_group_id']
-    account_mappings = config['sw_account_mapping']
-    default_payer_id = config['default_payer_id']
+    # get AT&T splitwise group ID
+    att_group_id = config.get('att_group_id', None)
+    if not att_group_id:
+        print("AT&T group not specified.")
+        print("Pick one from below.")
+        groups = sw.getGroups()
+        for ind, group in enumerate(groups):
+            print('%s: %s' % (ind, group.getName()))
+        pick = int(input('Choice: ').strip())
+        config['att_group_id'] = groups[pick].getId()
+        att_group_id = config['att_group_id']
+        save_config(config)
+
+    # get default payer ID
+    default_payer_id = config.get('default_payer_id', None)
+    if not default_payer_id:
+        print("Default payer not specified.")
+        print("Pick one from below.")
+        members = sw.getGroup(att_group_id).getMembers()
+        for ind, member in enumerate(members):
+            print('%s: %s' % (ind, member.getFirstName()))
+        pick = int(input('Choice: ').strip())
+        config['default_payer_id'] = members[pick].getId()
+        default_payer_id = config['default_payer_id']
+        save_config(config)
+
+    # get account mappings
+    account_mappings = config.get('sw_account_mapping', {})
 
     # create expenses on splitwise
     for due in dues:
@@ -122,9 +164,15 @@ def main():
         # check if splitwise Id exists
         if title not in account_mappings:
             print("No account mapping for", title)
-            continue
-
-        # skip payer
+            print("Pick one from below.")
+            members = sw.getGroup(att_group_id).getMembers()
+            for ind, member in enumerate(members):
+                print('%s: %s' % (ind, member.getFirstName()))
+            pick = int(input('Choice: ').strip())
+            account_mappings[title] = members[pick].getId()
+            save_config(config)
+        
+        # skip default payer
         if account_mappings[title] == default_payer_id:
             continue
 

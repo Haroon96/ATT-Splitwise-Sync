@@ -2,7 +2,7 @@ user
 .DS_Store
 .ipynb_checkpoints
 chromedriver*
-configuration.json
+config.json
 geckodriver
 geckodriver.log
 chrome.app
