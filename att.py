@@ -2,6 +2,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import undetected_chromedriver as uc
+from webdriver_manager.core.os_manager import OperationSystemManager, ChromeType
 from time import sleep
 from splitwise import Splitwise
 from splitwise.expense import Expense
@@ -11,6 +12,10 @@ import json
 def save_config(config):
     with open('config.json', 'w') as f:
         json.dump(config, f, indent=4)
+
+def get_chrome_version():
+    br_ver = OperationSystemManager().get_browser_version_from_os(ChromeType.GOOGLE)
+    return int(br_ver.split('.')[0])
 
 def create_expense(sw, att_group_id, paid_by, paid_for, amount, details):
     # create expense object
@@ -48,7 +53,7 @@ def create_expense(sw, att_group_id, paid_by, paid_for, amount, details):
 def init_driver():
     # add chrome options
     options = uc.ChromeOptions()
-    driver = uc.Chrome(options=options, user_data_dir='user', use_subprocess=True)
+    driver = uc.Chrome(options=options, user_data_dir='user', use_subprocess=True, version_main=get_chrome_version())
     driver.implicitly_wait(60)
     return driver
 
