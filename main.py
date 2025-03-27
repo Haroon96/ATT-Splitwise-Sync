@@ -8,6 +8,7 @@ from splitwise import Splitwise
 from splitwise.expense import Expense
 from splitwise.user import ExpenseUser
 import json
+import re
 
 def save_config(config):
     with open('config.json', 'w') as f:
@@ -17,12 +18,18 @@ def get_chrome_version():
     br_ver = OperationSystemManager().get_browser_version_from_os(ChromeType.GOOGLE)
     return int(br_ver.split('.')[0])
 
-def create_expense(sw, att_group_id, paid_by, paid_for, amount, details):
+def create_expense(sw, att_group_id, paid_by, paid_for, title, amount, details):
+
+    # generate description
+    period = re.search(r'Monthly charges for (?P<start>...) [0-9]{1,2} - (?P<end>...) [0-9]{1,2}', details).groupdict()
+    initials = ''.join([i[0] for i in title.split(' ')])
+    description = f'{initials} ({period["end"]})'
+
     # create expense object
     expense = Expense()
     expense.setGroupId(att_group_id)
     expense.setCost(amount)
-    expense.setDescription("AT&T")
+    expense.setDescription(description)
     expense.setDetails(details)
     
     # add information about who paid
@@ -79,7 +86,7 @@ def main():
 
     # wait for account overview page
     try:
-        WebDriverWait(driver, timeout=30).until(EC.title_contains('Overview'))
+        WebDriverWait(driver, timeout=30).until(EC.title_contains('overview'))
     except:
         input("Check browser for successful login and then press Enter.")
 
@@ -173,11 +180,14 @@ def main():
         # check if splitwise Id exists
         if title not in splitwise_mappings:
             print("No account mapping for", title)
-            print("Pick one from below.")
+            print("Pick one from below or leave empty to skip.")
             members = sw.getGroup(att_group_id).getMembers()
             for ind, member in enumerate(members):
                 print('%s: %s' % (ind, member.getFirstName()))
-            pick = int(input('Choice: ').strip())
+            pick = input("Choice: ").strip()
+            if not pick:
+                continue
+            pick = int(pick)
             splitwise_mappings[title] = members[pick].getId()
             save_config(config)
         
@@ -188,7 +198,7 @@ def main():
         # create expense
         paid_for_id = splitwise_mappings[title]
         print('%s owes %s' % (title, amount))
-        create_expense(sw, att_group_id, default_payer_id, paid_for_id, amount, details)
+        create_expense(sw, att_group_id, default_payer_id, paid_for_id, title, amount, details)
 
     # close driver
     driver.close()
