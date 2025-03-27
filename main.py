@@ -197,7 +197,7 @@ def main():
 
         # create expense
         paid_for_id = splitwise_mappings[title]
-        print('%s owes %s' % (title, amount))
+        print('%s owes $%s' % (title, amount))
         create_expense(sw, att_group_id, default_payer_id, paid_for_id, title, amount, details)
 
     # close driver
