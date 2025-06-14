@@ -21,9 +21,9 @@ def get_chrome_version():
 def create_expense(sw, att_group_id, paid_by, paid_for, title, amount, details):
 
     # generate description
-    period = re.search(r'Monthly charges for (?P<start>...) [0-9]{1,2} - (?P<end>...) [0-9]{1,2}', details).groupdict()
-    initials = ''.join([i[0] for i in title.split(' ')])
-    description = f'{initials} ({period["end"]})'
+    period = re.search(r'Monthly charges for (?P<start>.+?) [0-9]{1,2} - (?P<end>.+?) [0-9]{1,2}', details).groupdict()
+    first_name = title.split()[0].capitalize()
+    description = f'{first_name} ({period["end"]})'
 
     # create expense object
     expense = Expense()
