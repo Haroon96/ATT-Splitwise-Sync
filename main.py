@@ -92,7 +92,7 @@ def main():
 
 
     # get billing page
-    driver.get('https://www.att.com/acctmgmt/billandpay')
+    driver.get('https://www.att.com/acctmgmt/billing/mybillingcenter/')
 
     # get all bill lines
     lines = driver.find_elements(By.CSS_SELECTOR, 'div:has(> [data-testid="service-accordion-button"])')
