@@ -9,50 +9,47 @@ def save_config(config):
         json.dump(config, f, indent=4)
 
 
-def init_splitwise(driver, config):
+def init_splitwise(driver):
     """Initialize Splitwise API session with authentication credentials.
     
     Extracts credentials from the webdriver and initializes a requests Session.
-    Returns a requests Session object and updated config.
+    Returns:
+        session: Requests session with authentication
     """
-    splitwise_authentication = config.get('splitwise_authentication', None)
-    if not splitwise_authentication:
-        # Extract user credentials cookie from driver
-        driver.get('https://splitwise.com/')
-        try:
-            WebDriverWait(driver, timeout=30).until(EC.title_contains('Dashboard'))
-        except:
-            input("Check browser for successful login to Splitwise and then press Enter.")
+    # Extract user credentials cookie from driver
+    driver.get('https://splitwise.com/')
+    try:
+        WebDriverWait(driver, timeout=30).until(EC.title_contains('Dashboard'))
+    except:
+        input("Check browser for successful login to Splitwise and then press Enter.")
 
-        cookies = driver.get_cookies()
-        user_credentials = None
-        for cookie in cookies:
-            if cookie['name'] == 'user_credentials':
-                user_credentials = cookie['value']
-                break
-        
-        if not user_credentials:
-            raise ValueError("user_credentials cookie not found in driver. Please ensure you're logged into Splitwise.")
-        
-        # Extract CSRF token from the page
-        try:
-            csrf_token = driver.execute_script(
-                "return document.querySelector('[name=\"authenticity_token\"]')?.value || "
-                "document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content') || "
-                "document.querySelector('[data-csrf-token]')?.getAttribute('data-csrf-token')"
-            )
-        except:
-            csrf_token = None
-        
-        if not csrf_token:
-            raise ValueError("CSRF token not found on page. Please ensure you're on the Splitwise website.")
-        
-        config['splitwise_authentication'] = dict(
-            user_credentials=user_credentials,
-            csrf_token=csrf_token
+    cookies = driver.get_cookies()
+    user_credentials = None
+    for cookie in cookies:
+        if cookie['name'] == 'user_credentials':
+            user_credentials = cookie['value']
+            break
+    
+    if not user_credentials:
+        raise ValueError("user_credentials cookie not found in driver. Please ensure you're logged into Splitwise.")
+    
+    # Extract CSRF token from the page
+    try:
+        csrf_token = driver.execute_script(
+            "return document.querySelector('[name=\"authenticity_token\"]')?.value || "
+            "document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content') || "
+            "document.querySelector('[data-csrf-token]')?.getAttribute('data-csrf-token')"
         )
-        splitwise_authentication = config['splitwise_authentication']
-        # save_config(config)
+    except:
+        csrf_token = None
+    
+    if not csrf_token:
+        raise ValueError("CSRF token not found on page. Please ensure you're on the Splitwise website.")
+    
+    splitwise_authentication = dict(
+        user_credentials=user_credentials,
+        csrf_token=csrf_token
+    )
     
     # Create a session with the authentication cookies and headers
     session = requests.Session()
@@ -96,7 +93,7 @@ def init_splitwise(driver, config):
         # If the driver isn't available or cookies can't be read, continue with what we have
         pass
 
-    return session, config
+    return session
 
 
 def get_att_group_id(session, config):
@@ -111,7 +108,7 @@ def get_att_group_id(session, config):
         
         # Fetch groups from API
         response = session.get('https://secure.splitwise.com/api/v3.0/get_groups')
-        groups = response.json()
+        groups = response.json()['groups']
         
         for ind, group in enumerate(groups):
             print('%s: %s' % (ind, group['name']))
@@ -137,7 +134,7 @@ def get_default_payer_id(session, att_group_id, config):
         # Fetch group details to get members
         response = session.get(f'https://secure.splitwise.com/api/v3.0/get_group/{att_group_id}')
         group = response.json()
-        members = group['members']
+        members = group['group']['members']
         
         for ind, member in enumerate(members):
             print('%s: %s' % (ind, member['first_name']))
@@ -232,7 +229,7 @@ def add_account_mapping(session, att_group_id, title, splitwise_mappings, config
         # Fetch group details to get members
         response = session.get(f'https://secure.splitwise.com/api/v3.0/get_group/{att_group_id}')
         group = response.json()
-        members = group['members']
+        members = group['group']['members']
         
         for ind, member in enumerate(members):
             print('%s: %s' % (ind, member['first_name']))

@@ -14,7 +14,6 @@ from splitwise_api import (
     get_splitwise_mappings,
     create_expense,
     add_account_mapping,
-    save_config
 )
 
 def get_chrome_version():
