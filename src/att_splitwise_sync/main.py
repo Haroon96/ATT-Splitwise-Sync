@@ -7,7 +7,7 @@ from time import sleep
 import json
 import re
 
-from splitwise_api import (
+from .splitwise_api import (
     init_splitwise,
     get_att_group_id,
     get_default_payer_id,
@@ -82,7 +82,7 @@ def main():
         ))
 
     # access splitwise API
-    session, config = init_splitwise(driver, config)
+    session = init_splitwise(driver)
     
     # get AT&T splitwise group ID
     att_group_id, config = get_att_group_id(session, config)
